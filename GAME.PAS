@@ -43,9 +43,9 @@ begin
     setfillstyle(1,2);
     fillellipse(319,478,150,60);
 
-    flightArr[1].Init(20, 20, orPut);
-    flightArr[2].Init(40, 80, orPut);
-    flightArr[3].Init(10, 200, orPut);
+    flightArr[1].Init(20, 20);
+    flightArr[2].Init(40, 80);
+    flightArr[3].Init(10, 200);
     Run;
 end;
 

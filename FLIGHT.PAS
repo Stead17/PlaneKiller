@@ -12,16 +12,15 @@ const
 Type
 TFlight = object
 	public
-		procedure Init(_x: Integer; _y: Integer; _drawOption: Word);
+		procedure Init(_x: Integer; _y: Integer);
 		procedure Update;
 		procedure Clear;
 	private
 		x, y, xmax, ymax: Integer;
-		movingRight, onceDrawed: Boolean;
+		movingRight: Boolean;
 		image: Pointer;
 		width,width1: Integer;
 		height, height1: Integer;
-		drawOption: Word;
 	   	shift: word; { On what distance plane will move}
 	   	delayInterval: Integer;
 
@@ -34,20 +33,18 @@ end;
 
 implementation
 
-	procedure TFlight.Init(_x: Integer; _y: Integer; _drawOption: Word);
+	procedure TFlight.Init(_x: Integer; _y: Integer);
 	begin
-		x := _x; { Start koordinates }
-		y := _y; { Start koordinates }
+		x := _x; { Start сoordinates }
+		y := _y; { Start сoordinates }
     	xmax := getMaxX;
     	ymax := getMaxY;
-	    drawOption := _drawOption;
 	    delayInterval := 50;
 
 	    movingRight := true;
 	    shift := 20;
 
 	    TFlight.GetRightSideImage;
-	    onceDrawed := false;
 	    {TFlight.Draw;}
 	end;
 
@@ -188,12 +185,6 @@ implementation
 
 	procedure TFlight.Update;
 	begin
-		{
-		if onceDrawed = true then
-			TFlight.Clear
-		else
-			onceDrawed := true;
-		}
         if movingRight then
         begin
             if x + width < xmax then
@@ -204,7 +195,6 @@ implementation
             else
             begin
                 movingRight := false;
-                onceDrawed := false;
                 TFlight.GetLeftSideImage;
             end;
         end
@@ -218,7 +208,6 @@ implementation
             else
             begin
                 movingRight := true;
-                onceDrawed := false;
                 TFlight.GetRightSideImage;
             end;
         end;
