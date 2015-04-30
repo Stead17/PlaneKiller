@@ -11,34 +11,47 @@ const
 
 Type
 TFlight = object
+	public
+		procedure Init(_x: Integer; _y: Integer; _drawOption: Word);
+		procedure Update;
+		procedure Clear;
 	private
 		x, y, xmax, ymax: Integer;
+		movingRight, onceDrawed: Boolean;
 		image: Pointer;
 		width,width1: Integer;
-		height, height1: Integer; 
-		Xstart_koord,Ystart_koord : integer; { Start koortinate position }
-   		Xstart_koord1,Ystart_koord1 : integer; { Start koordinate position }
-   		shift: word; { On what distance plane will move}
-		
-		procedure Draw_Left_Side(var img: Pointer);
-		procedure Draw_Right_Side(var img: Pointer);
-	public
-		procedure Init(_x: Integer; _y: Integer);
-		procedure Moving;
+		height, height1: Integer;
+		drawOption: Word;
+	   	shift: word; { On what distance plane will move}
+	   	delayInterval: Integer;
+
+		procedure GetLeftSideImage;
+		procedure GetRightSideImage;
+		procedure ClearXY(_x : Integer; _y : Integer);
+		procedure Draw;
 end;
 
 
 implementation
-	procedure TFlight.Init(_x: Integer; _y: Integer);
+
+	procedure TFlight.Init(_x: Integer; _y: Integer; _drawOption: Word);
 	begin
-		x := _x;
-		y := _y;
+		x := _x; { Start koordinates }
+		y := _y; { Start koordinates }
     	xmax := getMaxX;
     	ymax := getMaxY;
+	    drawOption := _drawOption;
+	    delayInterval := 50;
 
+	    movingRight := true;
+	    shift := 20;
+
+	    TFlight.GetRightSideImage;
+	    onceDrawed := false;
+	    {TFlight.Draw;}
 	end;
 
-	procedure TFlight.Draw_Left_Side(var img : Pointer);
+	procedure TFlight.GetLeftSideImage;
 	const
 	     fluger: array[1..4] of Pointtype = (  (x:40*r; y: r*5),
 	                                           (x:44*r; y: r),
@@ -92,12 +105,12 @@ implementation
 	    height1:= ry - ly + 1;
 	    size:= imagesize(lx,ly,rx,ry);
 
-	    GetMem(img,size);
-	    GetImage(lx,ly,rx,ry,img^);
-	    PutImage(lx,ly,img^,xorPut);
-	    
+	    GetMem(image, size);
+	    GetImage(lx,ly,rx,ry,image^);
+	    ClearXY(lx, ly);
+	    {PutImage(lx,ly,image^, orPut);}
 	end;
-	procedure TFlight.Draw_Right_Side(var img : Pointer);
+	procedure TFlight.GetRightSideImage;
 	const
 	     fluger1: array [1..4] of Pointtype = ( (x:26*r; y:r*5),
 	                                             (x:22*r; y:r),
@@ -149,69 +162,65 @@ implementation
 	    width:= rx - lx + 1;
 	    height:= ry - ly + 1;
 
-	    size:= imagesize(lx,ly,rx,ry);
-	    GetMem(img,size);
-	    GetImage(lx,ly,rx,ry,img^);
-	    PutImage(lx,ly,img^,xorput);
+	    size := imagesize(lx,ly,rx,ry);
+	    GetMem(image, size);
+	    GetImage(lx, ly, rx, ry, image^);
+	    ClearXY(lx, ly);
+	    {PutImage(lx,ly,image^, orPut);}
 
 	end;
 
-	procedure TFlight.Moving;
-	    var delayInterval: Integer;
-	        movingRight, exitCondition: Boolean;
+	procedure TFlight.Draw;
 	begin
-	    delayInterval := 50;
-	    
-	    Xstart_koord := 40;
-	    Ystart_koord := 50;
-	    Xstart_koord1 := 400;
-	    Ystart_koord1 := 200;
+        PutImage(x, y, image^, orPut);
+        delay (delayInterval);
+	end;
 
-	    x := Xstart_koord;
-	    y := Ystart_koord;
-	    movingRight := true;
-	    exitCondition := false;
-	    shift := 20;
+	procedure TFlight.Clear;
+	begin
+		PutImage(x, y, image^, xorPut);
+	end;
 
-	    TFlight.Draw_Right_Side(image);
-	    while not exitCondition do
-	    begin
-	        if movingRight then
-	        begin
-	            if x + width < xmax then
-	            begin
-	                PutImage(x,y,image^,xorPut);
-	                delay( delayInterval);
-	                PutImage(x,y,image^,xorPut);
-	                x:= x + shift;
-	            end
-	            else
-	            begin
-	                movingRight := false;
-	                TFlight.Draw_Left_Side(image);    
-	            end;
-	        end
-	        else
-	        begin
-	            if x >= xmin then
-	            begin
-	                PutImage(x,y,image^,xorPut);
-	                delay(delayInterval);
-	                PutImage(x,y,image^,xorPut);
-	                x := x - shift;
-	            end
-	            else
-	            begin
-	                movingRight := true;
-	                TFlight.Draw_Right_Side(image);
-	            end;
-	        end;
+	procedure TFlight.ClearXY(_x : Integer; _y : Integer);
+	begin
+		PutImage(_x, _y, image^, xorPut);
+	end;
 
-	        while keypressed do
-	        begin
-	            readkey;
-	            exitCondition := true;
-	        end;
-	    end;
-	end;	
+	procedure TFlight.Update;
+	begin
+		{
+		if onceDrawed = true then
+			TFlight.Clear
+		else
+			onceDrawed := true;
+		}
+        if movingRight then
+        begin
+            if x + width < xmax then
+            begin
+                x := x + shift;
+            	TFlight.Draw;
+            end
+            else
+            begin
+                movingRight := false;
+                onceDrawed := false;
+                TFlight.GetLeftSideImage;
+            end;
+        end
+        else
+        begin
+            if x >= xmin then
+            begin
+                x := x - shift;
+            	TFlight.Draw;
+            end
+            else
+            begin
+                movingRight := true;
+                onceDrawed := false;
+                TFlight.GetRightSideImage;
+            end;
+        end;
+	end;
 end.
