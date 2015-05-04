@@ -1,0 +1,52 @@
+program pr;
+uses graph,crt;
+var Gd,Gm,size: integer;
+   ch: char;
+   flag: boolean;
+   p1,p2: pointer;
+procedure Image1; {создаем первый вариант спрайта}
+begin
+   setcolor(14);
+   Rectangle(100,100,130,160); {туловище человечка}
+   Circle(115,90,10); {голова}
+   Line(100,100,80,160); {правая рука}
+   Line(130,100,145,160); {левая рука}
+   Line(105,160,105,210); {правая нога}
+   Line(125,160,125,210); {левая нога}
+end;
+procedure Image2; {создаем второй вариант спрайта}
+begin
+   setcolor(14);
+   Rectangle(100,100,130,160); {туловище}
+   Circle(115,90,10); {голова}
+   Line(100,100,40,100); {правая рука}
+   Line(130,100,190,100); {левая рука}
+   Line(105,160,90,210); {правая нога}
+   Line(125,160,140,210); {левая нога}
+end;
+begin
+   Gd:=detect;
+   initGraph(Gd,Gm,'');
+   cleardevice;
+   SetActivePage(1);
+   Image1; {вывод на невидимую страницу 1-ого варианта спрайта}
+   size:=ImageSize(30,70,210,210); {определяем нужное кол-во памяти}
+   GetMem(p1,size);
+   GetImage(30,70,210,210,p1^);{сохраняем образ 1}
+   ClearViewPort;
+   Image2; {вывод на невидимую страницу 2-ого варианта спрайта}
+   GetMem(p2,size);
+   GetImage(30,70,210,210,p2^);{сохраняем образ 2}
+   SetActivePage(0);
+   SetVisualPage(0);
+   {без использования страниц}
+   while not keypressed do
+     begin
+       PutImage(300,150,p1^,NormalPut);
+       delay(400);
+       PutImage(300,150,p1^,XorPut); {стираем образ 1}
+       PutImage(300,130,p2^,NormalPut);
+       delay(100);
+       PutImage(300,130,p2^,XorPut); {стираем образ 2}
+     end;
+end.     
