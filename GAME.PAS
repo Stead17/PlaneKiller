@@ -1,29 +1,98 @@
 program Game;
-uses crt,graph, FLIGHT,PLANE;
-
+uses crt, graph, FLIGHT, BLASTER;
+const 
+    StartBlX = 315;
+    StartBlY = 357;
 var
    flightArr: array[1..10] of TFlight;
-   g,h,e: integer;
-
+   Blast : TShoot;
+   g, h, e, amount: integer;
+   StartPlX, StartPlY : Integer;
+   StartPlX1, StartPlY1 : Integer;
+   s : Char;
 procedure ClearAll(count : Integer);
     var i : Integer;
 begin
     for i := 1 to count do
-        flightArr[i].Clear;
+    begin
+        if ImgRight = nil then 
+        flightArr[i].Clear(ImgLeft)
+        else 
+        flightArr[i].Clear(ImgRight);
+    end;
+end;
+
+procedure BackGround;
+begin
+    setbkcolor(LightBlue);
+    setcolor(1);
+    setfillstyle(1,2);
+    fillellipse(319,478,150,60);
+    SetLineStyle(0,1,3);
+    Line(0,419,679,419);
 end;
 
 procedure Run;
     var exitCondition: Boolean;
-        i: Integer;
+        GetStart, BoomCondition: Boolean;
+        i, j: Integer;
 begin
-    exitCondition := false;
-    while not keypressed do
-    begin
-        for i := 1 to 3 do
-            flightArr[i].Update;
-        ClearAll(3);
+    exitCondition:= false;
+    GetStart:= false;
+
+    while not exitCondition do
+     begin
+        for i := 1 to amount do
+        flightArr[i].Update;
+  
+        PutImage(x1, y1, Pict^, Normalput); 
+
+
+        if keypressed then
+        begin
+            button:= readkey;
+            if (button = #77) or (button = #75) or (button = #47) then
+            Blast.Move(x1, y1, exitCondition)
+            else
+            begin
+                if ( button = #32 ) and (GetStart = false) then
+                begin
+                    CircX:= x1 + 4;
+                    CircY:= y1 + 6;
+                    PutImage(CircX, CircY, ImgBullet^, XorPut);
+                    GetStart:= true;
+                end;
+            end;
+        end;
+
+
+        if GetStart = true then
+        begin
+            PutImage(CircX, CircY, ImgBullet^, XorPut);
+            CircY:= CircY - 15;
+            PutImage(CircX, CircY, ImgBullet^, XorPut);
+            BoomCondition:= Blast.Crossing(x, y, CircX, CircY, width, height, GetStart);
+            if CircY - 15 <= 0 then
+            begin
+                GetStart:= false;
+                PutImage(CircX, CircY, ImgBullet^, Xorput);                
+                OutTextXY(CircX, CircY, 'Was Close');
+            end;
+            if (GetStart = false) and (BoomCondition = false)  then
+            begin
+                exitCondition:= true;
+                PutImage(CircX, CircY, ImgBullet^, Xorput);
+            end;
+        end;
+
+    ClearAll(amount);
+    if exitCondition and (GetStart = false) then 
+        begin
+            OutTextXY(CircX, CircY - 10, 'BOOOMM!!!');
+        end;    
     end;
 end;
+
 
 begin
      g:= detect;
@@ -32,18 +101,22 @@ begin
 WriteLn(GraphErrorMsg(e))
 else
 begin
-    setbkcolor(LightBlue);
-    setcolor(1);                { THe ground}
-    setfillstyle(1,2);
-    fillellipse(319,478,150,60);
+    BackGround;
 
-    flightArr[1].Init(20, 20);
-    flightArr[2].Init(40, 80);
-    flightArr[3].Init(10, 200);
+    randomize;
+    StartPlX:= random(600);
+    StartPlY:= random(200);
+    flightArr[1].Init(StartPlX, StartPlY);
+    Blast.Init;
+
+    x1:= StartBlX - 100;
+    y1:= StartBlY;
+
+
+    amount:= 1;
     Run;
 
-    {HideLeftDraw ;
-    HideRightDraw;}
+
 
 end;
 

@@ -5,29 +5,31 @@ uses
 	crt, graph;
 
 const
-     r = 5;
-     xmin = 0;
-     ymin = 0;
-
+	xmin = 0;
+	ymin = 0;
+	r = 2;
+var 
+	ImgLeft, ImgRight: Pointer;
+	x, y: Integer;
+	width: Integer;
+	height: Integer;
 Type
 TFlight = object
 	public
 		procedure Init(_x: Integer; _y: Integer);
 		procedure Update;
-		procedure Clear;
+		procedure Clear(image : Pointer);
 	private
-		x, y, xmax, ymax: Integer;
+		xmax, ymax: Integer;
 		movingRight: Boolean;
-		image: Pointer;
-		width,width1: Integer;
-		height, height1: Integer;
-	   	shift: word; { On what distance plane will move}
+		size, size1 : Integer;
+	   	shift, shift1 : word; { On what distance plane will move}
 	   	delayInterval: Integer;
 
 		procedure GetLeftSideImage;
 		procedure GetRightSideImage;
-		procedure ClearXY(_x : Integer; _y : Integer);
-		procedure Draw;
+		{procedure ClearXY(_x : Integer; _y : Integer);}
+		procedure Draw(image : Pointer);
 end;
 
 
@@ -39,18 +41,20 @@ begin
 	y := _y; { Start сoordinates }
 	xmax := getMaxX;
 	ymax := getMaxY;
-    delayInterval := 200;
-
+    delayInterval := 70;
+    New(ImgLeft);
+    New(ImgRight);
+    ImgLeft:= nil;
+    ImgRight:= nil;
     movingRight := true;
-    shift := 150;
+    shift := 40;
+    shift1 := 20;
 
     TFlight.GetRightSideImage;
-    {TFlight.Draw;}
 end;
 
 procedure TFlight.GetRightSideImage;
 const
-	r = 2;
 	{ Rectangle consnstant Parameters }
  	RectangleParameters: array[1..5] of Integer = (15,20,25,30,45);
 
@@ -96,9 +100,10 @@ const
 										(x: r * Flug5; y: r * Flug1),
 										(x: r * Flug4; y: r * Flug3) );
 var
-	lx,ly,rx,ry,size : integer;
+	lx, ly, rx, ry : integer;
 begin
 	SetActivePage(1);
+
 	SetLineStyle(0, 0, 1);
 
 	{ The Body of the plane }
@@ -140,23 +145,23 @@ begin
     lx:= r * RectangleParameters[1]; { Taking picture }
     ly:= r * Flug1;
     rx:= r * Nose1;
-    ry:= r * Window1;
-    
+    ry:= r * Wind3;
+
     width:= rx - lx;
     height:= ry - ly;
-    size:= imagesize(lx,ly,rx,ry);
+    size:= imagesize(lx, ly, rx, ry);
 
-    GetMem(image, size);
-    GetImage(lx,ly,rx,ry,image^);
-    ClearViewPort;
-   
+    GetMem(ImgRight, size);
+    GetImage(lx, ly, rx, ry, ImgRight^);
+    {ClearViewPort;}
+    PutImage(lx, ly, ImgRight^, XorPut);
+
 end;
 procedure TFlight.GetLeftSideImage;
 const
-	r = 2;
 	{ Rectangle consnstant Parameters }
 	RectangleParameters: array[1..5] of Integer = (15,20,25,30,45);
-	
+
 	{ Fluger constant Parameters }
 	Flug1 = 5;
 	Flug2 = 10;
@@ -198,8 +203,7 @@ const
 										(x: r * Wind5; y: r * Wind3),
 										(x: r * Wind4; y: r * Wind1) );
 	var 
-		lx,ly,rx,ry,size : integer;
-		img : Pointer;
+		lx, ly, rx, ry : integer;
 begin
 	SetActivePage(1);
 	SetLineStyle(0, 0, 1);
@@ -235,6 +239,7 @@ begin
     Line(r * RectangleParameters[1], r * RectangleParameters[1], r * RectangleParameters[1], r * Window6);
     Line(r * RectangleParameters[1], r * Window6, r * Window1, r * Window6);
     Line(r * RectangleParameters[1], r * Window6, r * RectangleParameters[3], r * RectangleParameters[1]);
+
     SetFillStyle(1, Cyan);
     FloodFill(r * Window2, r * Window5, 1);
     FloodFill(r * Window3, r * Window4, 1);
@@ -244,62 +249,66 @@ begin
     rx:= r * RectangleParameters[5];
     ry:= r * Wind3;
 
-    size:= imagesize(lx, ly, rx, ry);
-    GetMem(image, size);
-    GetImage(lx, ly, rx, ry, image^);
-    ClearViewPort;
-
-    
+    size1:= imagesize(lx, ly, rx, ry);
+    GetMem(ImgLeft, size1);
+    GetImage(lx, ly, rx, ry, ImgLeft^);
+{    ClearViewPort;}
+	PutImage(lx, ly,ImgLeft^, XorPut);
 end;
 
 
-
-procedure TFlight.Draw;
+procedure TFlight.Draw(image : Pointer);
 begin
 	SetActivePage(0);
 	SetVisualPage(0);
-    PutImage(x, y, image^, XorPut);
+  PutImage(x, y, image^, XorPut);
     delay (delayInterval);
 end;
 
 
-procedure TFlight.Clear;
+procedure TFlight.Clear(image: Pointer );
 begin
 	PutImage(x, y, image^, xorPut);
 end;
 
-procedure TFlight.ClearXY(_x : Integer; _y : Integer);
+{procedure TFlight.ClearXY(_x : Integer; _y : Integer);
 begin
 	PutImage(_x, _y, image^, xorPut);
-end;
+end;}
 
 procedure TFlight.Update;
 begin
-    if movingRight then
-    begin
-        if x + width <= xmax   then
-        begin
-            x := x + shift;
-          	TFlight.Draw;
-        end
-        else
-        begin
-            movingRight := false;
-            TFlight.GetLeftSideImage;
-        end;
-    end
-    else
-    begin
-        if x >= xmin then
-        begin
-            x := x - shift;
-        	TFlight.Draw;
-        end
-        else
-        begin
-            movingRight := true;
-            TFlight.GetRightSideImage;
-        end;
-    end;
+	if (x + width <= xmax) and ( movingRight ) then
+	begin
+		if ImgRight = nil then 
+			TFlight.GetRightSideImage;
+		x := x + shift;
+		TFlight.Draw(ImgRight);
+		if x + width > xmax then 
+		begin
+			movingRight:= false;	
+			FreeMem(ImgRight, size);
+			ImgRight:= nil;
+			{y:= y + shift1;}
+		end;
+	end
+	else
+	begin
+		if (x >= xmin) and ( movingRight = false ) then 
+		begin 
+			if ImgLeft = nil then 
+				TFlight.GetLeftSideImage;
+			x:= x - shift;
+			TFlight.Draw(ImgLeft);
+			if x < xmin then 
+			begin
+				movingRight:= true;
+				FreeMem(ImgLeft, size1);
+				ImgLeft:= nil;
+				{y:= y + shift1;}				
+			end;
+		end;	
+	end;
 end;
+
 end.
