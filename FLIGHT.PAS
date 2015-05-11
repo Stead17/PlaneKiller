@@ -9,11 +9,11 @@ const
 	ymin = 0;
 	r = 2;
 var 
-	ImgLeft, ImgRight: Pointer;
 	x, y: Integer;
 	width: Integer;
 	height: Integer;
-Type
+	ImgLeft, ImgRight: Pointer;			
+type
 TFlight = object
 	public
 		procedure Init(_x: Integer; _y: Integer);
@@ -28,10 +28,8 @@ TFlight = object
 
 		procedure GetLeftSideImage;
 		procedure GetRightSideImage;
-		{procedure ClearXY(_x : Integer; _y : Integer);}
 		procedure Draw(image : Pointer);
 end;
-
 
 implementation
 
@@ -51,6 +49,54 @@ begin
     shift1 := 20;
 
     TFlight.GetRightSideImage;
+end;
+
+procedure TFlight.Draw(image : Pointer);
+begin
+	SetActivePage(0);
+	SetVisualPage(0);
+  PutImage(x, y, image^, XorPut);
+    delay (delayInterval);
+end;
+
+procedure TFlight.Clear(image: Pointer );
+begin
+	PutImage(x, y, image^, xorPut);
+end;
+
+procedure TFlight.Update;
+begin
+	if (x + width <= xmax) and ( movingRight ) then
+	begin
+		if ImgRight = nil then 
+			TFlight.GetRightSideImage;
+		x := x + shift;
+		TFlight.Draw(ImgRight);
+		if x + width > xmax then 
+		begin
+			movingRight:= false;	
+			FreeMem(ImgRight, size);
+			ImgRight:= nil;
+			y:= y + shift1;
+		end;
+	end
+	else
+	begin
+		if (x >= xmin) and ( movingRight = false ) then 
+		begin 
+			if ImgLeft = nil then 
+				TFlight.GetLeftSideImage;
+			x:= x - shift;
+			TFlight.Draw(ImgLeft);
+			if x < xmin then 
+			begin
+				movingRight:= true;
+				FreeMem(ImgLeft, size1);
+				ImgLeft:= nil;
+				y:= y + shift1;
+			end;
+		end;	
+	end;
 end;
 
 procedure TFlight.GetRightSideImage;
@@ -153,10 +199,10 @@ begin
 
     GetMem(ImgRight, size);
     GetImage(lx, ly, rx, ry, ImgRight^);
-    {ClearViewPort;}
     PutImage(lx, ly, ImgRight^, XorPut);
 
 end;
+
 procedure TFlight.GetLeftSideImage;
 const
 	{ Rectangle consnstant Parameters }
@@ -252,63 +298,7 @@ begin
     size1:= imagesize(lx, ly, rx, ry);
     GetMem(ImgLeft, size1);
     GetImage(lx, ly, rx, ry, ImgLeft^);
-{    ClearViewPort;}
 	PutImage(lx, ly,ImgLeft^, XorPut);
-end;
-
-
-procedure TFlight.Draw(image : Pointer);
-begin
-	SetActivePage(0);
-	SetVisualPage(0);
-  PutImage(x, y, image^, XorPut);
-    delay (delayInterval);
-end;
-
-
-procedure TFlight.Clear(image: Pointer );
-begin
-	PutImage(x, y, image^, xorPut);
-end;
-
-{procedure TFlight.ClearXY(_x : Integer; _y : Integer);
-begin
-	PutImage(_x, _y, image^, xorPut);
-end;}
-
-procedure TFlight.Update;
-begin
-	if (x + width <= xmax) and ( movingRight ) then
-	begin
-		if ImgRight = nil then 
-			TFlight.GetRightSideImage;
-		x := x + shift;
-		TFlight.Draw(ImgRight);
-		if x + width > xmax then 
-		begin
-			movingRight:= false;	
-			FreeMem(ImgRight, size);
-			ImgRight:= nil;
-			{y:= y + shift1;}
-		end;
-	end
-	else
-	begin
-		if (x >= xmin) and ( movingRight = false ) then 
-		begin 
-			if ImgLeft = nil then 
-				TFlight.GetLeftSideImage;
-			x:= x - shift;
-			TFlight.Draw(ImgLeft);
-			if x < xmin then 
-			begin
-				movingRight:= true;
-				FreeMem(ImgLeft, size1);
-				ImgLeft:= nil;
-				{y:= y + shift1;}				
-			end;
-		end;	
-	end;
 end;
 
 end.

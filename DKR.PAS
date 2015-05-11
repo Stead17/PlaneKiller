@@ -1,8 +1,30 @@
 program the_game;
-uses crt,graph;
+uses crt,graph,dos;
+type
+    TTime = record
+      hours, minutes, seconds,hseconds: Word;
+    end;
+
+    Top10 = record
+      name: string;
+      progtime:longint;
+    end;
+
 var
  g,h:integer;
  rec:text;
+
+  function ResTime(const STime, FTime: TTime): longint;
+  begin
+    ResTime := 36000 * Longint(FTime.hours) +
+    6000 * longint(FTime.minutes) +
+    100 * longint(FTime.seconds) +
+    longint(FTime.hseconds) -
+    36000 * longint(STime.hours) -
+    6000 * longint(STime.minutes) -
+    100 * longint(STime.seconds) -
+    longint(STime.hseconds);
+ end;
 
   function distance(x,y,x1,y1:real):real;
   var
@@ -31,10 +53,15 @@ var
   end;
 
   procedure table_of_records;
+  const
+   k=10000;
   var
-   name,time: string;
+   name: string;
    i:byte;
+   number,buf:string;
    x1,x2,x3,y:word;
+   time:longint;
+   ch:char;
   begin
     ClearViewPort;
     reset(rec);
@@ -45,26 +72,76 @@ var
     SetTextStyle(8,0,2);
     OutTextXY(x2,y,'Name');
     OutTextXY(x3,y,'Time');
-
-    for i:= 1 to 10 do
+    for i:=1 to 10 do
     begin
       readln(rec,name);
       readln(rec,time);
+      if time = k then time:=0;
       inc(y,30);
-      OutTextXY(x1,y,'1');
+      str(i,number);
+      OutTextXY(x1,y,number);
       OutTextXY(x2,y,name);
-      OutTextXY(x3,y,time);
+      str(time div 6000, number);
+      buf:=number+' : ';
+      str(time div 100, number);
+      buf:=buf+number+' : ';
+      str(time mod 100, number);
+      buf:=buf+number;
+      OutTextXY(x3,y,buf);
     end;
     close(rec);
-    readkey;
+    repeat
+      ch:=readkey;
+    until ch=#13 ;
   end;
 
-  procedure victory(base:real; x,y,x1,y1,r:integer);
+  procedure sort_rec(ptime:longint; s:string);
   var
-    ch:char;
+    A:array[0..10] of Top10;
+    i,j,imin:byte;
+    min:Top10;
   begin
-    if base<r then
+    reset(rec);
+    for i:= 0 to 9 do
     begin
+      readln(rec,A[i].name);
+      readln(rec,A[i].progtime);
+    end;
+    A[10].name:= s;
+    A[10].progtime:= ptime;
+    for j:=0 to 9 do
+    begin
+      min:=A[j];
+      imin:=j;
+      for i:=j+1 to 10 do
+      begin
+        if A[i].progtime < min.progtime then
+        begin
+           min:=A[i];
+           imin:=i;
+        end;
+      end;
+      A[imin]:=A[j];
+      A[j]:=min;
+    end;
+    rewrite(rec);
+    for i:= 0 to 9 do
+    begin
+      writeln(rec,A[i].name);
+      writeln(rec,A[i].progtime);
+    end;
+    close(rec);
+  end;
+
+  procedure victory(base:real; x,y,x1,y1,r:integer; STime:TTime);
+  var
+    FinishTime:TTime;
+    ch:char;
+    time:longint;
+    t,t1:string;
+    k:word;
+  begin
+      with FinishTime do GetTime(Hours,Minutes,Seconds,HSeconds);
       NoSound;
       OutTextXY(x,y,chr(2));
       SetColor(Yellow);
@@ -76,14 +153,40 @@ var
       SetTextStyle(10,0,4);
       OutTextXY(150,50,'Congratulation');
       OutTextXY(180,100,'You Win !!!');
-    end;
-  end;
+      time:=ResTime(STime,FinishTime);
+      SetTextStyle(9,0,1);
+      str(time div 6000,t);
+      t1:=t+' : ';
+      str(time div 100,t);
+      t1:=t1+t+' : ';
+      str(time mod 100,t);
+      t1:=t1+t;
+      OutTextXY(150,200,'Your time is');
+      OutTextXY(350,200,t1);
+      OutTextXY(50,250,'Enter your name : ');
+      k:=320;
+      SetTextStyle(10,0,1);
+      t1:='';
+      while (length(t1)<=5)and(ch<>#13) do
+      begin
+        ch:=readkey;
+        if (ch in ['a'..'z','A'..'Z'])and(ch<>#77)and(ch<>#72)and(ch<>#75)and(ch<>#80) then
+        begin
+          t1:=t1+ch;
+          OutTextXY(k,250,ch);
+          inc(k,25);
+        end;
+      end;
+      while ch<>#13 do ch:=readkey;
+      sort_rec(time,t1);
+ end;
 
   procedure move_cursor;
   var
     x,y,x1,y1,r,m,n: integer;
     ch:char;
     base:real;
+    StartTime: TTime;
   begin
     ClearViewPort;
     randomize;
@@ -92,7 +195,7 @@ var
     repeat
       x1:=random(630);
       y1:=random(470);
-      r:=random(50)+5;
+      r:=random(60)+10;
     until (x1<>x) and (y1<>y);
     n:=294;
     m:=440;
@@ -102,37 +205,36 @@ var
     repeat
       ch:=readkey;
     until (ch=#77)or(ch=#80)or(ch=#75)or(ch=#72)or(ch=#71);
-
-    while ch<>#71 do
+    with StartTime do
+     GetTime(Hours,Minutes,Seconds,HSeconds);
+    while (ch<>#71)and (base > r) do
     begin
       ClearViewPort;
       case ch  of
         #77:begin
-	      if x<625 then inc(x,5);
+	      if x < 625 then inc(x,5);
 	      OutTextXY(x,y,chr(16));
 	      make_sound(base,m,n,x,y,x1,y1);
-	      victory(base,x,y,x1,y1,r);
+
 	    end;
 
-	#75:begin
+	   #75:begin
 	      if x>5 then dec(x,5);
 	      OutTextXY(x,y,chr(17));
 	      make_sound(base,m,n,x,y,x1,y1);
-	      victory(base,x,y,x1,y1,r);
 	    end;
 
-	#72:begin
+	   #72:begin
 	      if y>5 then dec(y,5);
 	      OutTextXY(x,y,chr(30));
 	      make_sound(base,m,n,x,y,x1,y1);
-	      victory(base,x,y,x1,y1,r);
 	     end;
 
-	#80:begin
+	  #80:begin
 	      if y<465 then inc(y,5);
 	      OutTextXY(x,y,chr(31));
 	      make_sound(base,m,n,x,y,x1,y1);
-	      victory(base,x,y,x1,y1,r);
+
 	    end;
       end;
       repeat
@@ -140,10 +242,21 @@ var
       until (ch=#77)or(ch=#72)or(ch=#75)or(ch=#80)or(ch=#71);
 
     end;
-    NoSound;
-    Halt;
+	victory(base,x,y,x1,y1,r,StartTime);
   end;
 
+  procedure about;
+  var
+    ch:char;
+  begin
+    ClearViewPort;
+    SetTextStyle(8,0,2);
+    OutTextXY(50,50,'Try to find a hide area.');
+    OutTextXY(50,70,'Move cursor and listen sound.');
+    OutTextXY(50,90,'If sound hight then you move in a right way,');
+    OutTextXY(50,110,'else you choose wrong way');
+    while ch<>#13 do ch:=readkey;
+  end;
 
   procedure main_menu;
   var
@@ -151,6 +264,8 @@ var
     i:byte;
     k:word;
   begin
+   while true do
+   begin
     i:=0;
     SetColor(10);
     SetTextStyle(10,0,4);
@@ -214,10 +329,12 @@ var
 
     case i of
       0 : move_cursor;
-      1 : Halt;
+      1 : about;
       2 : table_of_records;
       3 : Halt;
     end;
+    ClearViewPort;
+   end;
   end;
 
 
@@ -227,6 +344,5 @@ begin
   g:= detect;
   initgraph(g,h,'');
   main_menu;
-  {move_cursor; }
   CloseGraph;
 end.

@@ -2,33 +2,33 @@ unit BLASTER;
 
 interface
 uses
-	crt,graph;
+	crt,graph, FLIGHT;
 
 type
   TShoot = object
   public
-    procedure Move(var x1, y1: Integer;  var OutCondition : Boolean);
-    procedure Init;
+    procedure Move(var x1, y1: Integer;  var OutCondition, GtStr : Boolean);
+    procedure Init(_x, _y : Integer);
     procedure BulletDraw;
-    procedure Shooting;
-    procedure Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer; var GtStr: Boolean);
+    procedure MoveBullet(var CircleX, CircleY : Integer; var ExCond, GtStr : Boolean);
   private
     xmin, xmax: Integer;
     delayinterval: Integer;
     BlastShift : Integer;
     GetStart : Boolean;
     procedure BlastDraw;
-    procedure MoveBlast(var x1, y1: Integer;);
+    procedure MoveBlast(var x1, y1: Integer);
+    function Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer; var GtStr: Boolean): Boolean;
 end;
 var 
   CircX, CircY : Integer;
-  button, button1: Char;
+  button : Char;
   Pict, ImgBullet : Pointer;
   x1, y1: Integer;
   flag : Boolean;
 implementation
 
-procedure TShoot.Init;
+procedure TShoot.Init(_x, _y : Integer);
 begin
   TShoot.BlastDraw;
   TShoot.BulletDraw;
@@ -39,42 +39,11 @@ begin
   xmax:= 599;
   BlastShift:= 10;
   GetStart:= true;
-  flag:= true;
-  button1:= '2';
+  x1:= _x;
+  y1:= _y;
+  PutImage(x1, y1, Pict^, Normalput);
 end;
-procedure TShoot.MoveBlast(var x1, y1: Integer);
-begin
-  PutImage(x1, y1, Pict^, XorPut);
-  if button = #75 then
-    x1:= x1 - BlastShift
-  else 
-    x1:= x1 + BlastShift;
-  delay(delayinterval);
-  PutImage(x1, y1, Pict^, XorPut);   
-end;
-procedure TShoot.Shooting;
-begin
-  {repeat}
-  if GetStart = true then 
-  begin
-    CircX:= x1 + 4;
-    CircY:= y1 + 6;
-    PutImage(CircX, CircY, ImgBullet^, NormalPut);
-    GetStart:= false;
-  end;
-  if CircY <= 0 then 
-  begin
-    delay(delayinterval);
-    PutImage(CircX, CircY, ImgBullet^, NormalPut);
-    CircY:= CircY - 5;
-    PutImage(CircX, CircY, ImgBullet^, NormalPut);
-  end
-  else 
-    GetStart:= false;
-  {until (CircY <= 0);}
-  {PutImage(CircX, CircY, ImgBullet^, XorPut);}
-end;
-procedure TShoot.Move(var x1, y1: Integer; var OutCondition : Boolean);
+procedure TShoot.Move(var x1, y1: Integer; var OutCondition, GtStr : Boolean);
 begin
   case button of 
     #75 : 
@@ -89,10 +58,53 @@ begin
     end;
     #47: 
       OutCondition:= true;
+    #32:
+    begin
+      if GtStr = false then 
+      begin
+        CircX:= x1 + 4;
+        CircY:= y1 + 6;
+        PutImage(CircX, CircY, ImgBullet^, XorPut);
+        GtStr:= true;
+      end;
+    end;
   end;
 end;
 
-procedure TShoot.Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer;var GtStr: Boolean);
+procedure TShoot.MoveBlast(var x1, y1: Integer);
+begin
+  PutImage(x1, y1, Pict^, XorPut);
+  if button = #75 then
+    x1:= x1 - BlastShift
+  else 
+    x1:= x1 + BlastShift;
+  delay(delayinterval);
+  PutImage(x1, y1, Pict^, XorPut);   
+end;
+
+procedure TShoot.MoveBullet(var CircleX, CircleY : Integer; var ExCond, GtStr : Boolean);
+var BoomCondition: Boolean;
+    BulletShift: Integer;
+begin
+  BulletShift:= 15;
+  PutImage(CircleX, CircleY, ImgBullet^, XorPut);
+  CircleY:= CircleY - BulletShift;
+  PutImage(CircleX, CircleY, ImgBullet^, XorPut);
+  BoomCondition:= TShoot.Crossing(x, y, CircleX, CircleY, width, height, GtStr);
+  if CircleY - BulletShift <= 0 then
+  begin
+    GtStr:= false;
+    PutImage(CircleX, CircleY, ImgBullet^, Xorput);                
+    OutTextXY(CircleX, CircleY, 'Was Close');
+  end;
+  if (GtStr = false) and (BoomCondition = false)  then
+  begin
+    ExCond:= true;
+    PutImage(CircleX, CircleY, ImgBullet^, Xorput);
+  end;
+end;
+
+function TShoot.Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer;var GtStr: Boolean): Boolean;
 var 
   i, j: Integer;
 begin
@@ -100,8 +112,12 @@ begin
   begin
     for j:= cornY to cornY + PlaneHeigth do
     begin
-      if (BulletX + 6 = i) and (BulletY = j) then
-        GtStr:= False;
+      if ( (BulletX + 6 = i) or  (BulletX = i ) or  (BulletX + 12 = i) )and ( BulletY = j) ) then
+      begin
+        GtStr:= false;
+        Crossing:= false;
+        break;
+      end;
     end;
   end;
 end;
@@ -151,7 +167,7 @@ begin
     ry:= 469;
 
     width:= rx - lx + 1;
-    height:= ry - rx + 1;
+    height:= ry - ly + 1;
 
     size:= ImageSize(lx, ly, rx, ry);
     GetMem(Pict, size);
