@@ -14,11 +14,11 @@ var
 	height: Integer;
 	ImgLeft, ImgRight: Pointer;			
 type
-TFlight = object
+TFlight = object { The define of an object Plane }
 	public
-		procedure Init(_x: Integer; _y: Integer);
-		procedure Update;
-		procedure Clear(image : Pointer);
+		procedure Init(_x: Integer; _y: Integer; factor : integer);
+		procedure Update; { Draw of it on differnt positions }
+		procedure Clear(image : Pointer); 
 	private
 		xmax, ymax: Integer;
 		movingRight: Boolean;
@@ -28,12 +28,12 @@ TFlight = object
 
 		procedure GetLeftSideImage;
 		procedure GetRightSideImage;
-		procedure Draw(image : Pointer);
+		procedure Draw(image : Pointer); { Craetinf an image of a plane and getting it into the memory }
 end;
 
 implementation
 
-procedure TFlight.Init(_x: Integer; _y: Integer);
+procedure TFlight.Init(_x: Integer; _y: Integer; factor : integer);
 begin
 	x := _x; { Start сoordinates }
 	y := _y; { Start сoordinates }
@@ -45,9 +45,24 @@ begin
     ImgLeft:= nil;
     ImgRight:= nil;
     movingRight := true;
-    shift := 40;
-    shift1 := 20;
-
+    case factor of 
+    1:
+    begin
+    	shift:= 40;
+    	shift1:= 20;
+    end;
+    2: 
+    begin
+    	shift:= 80;
+    	shift1:= 40; 
+    end;
+    3:
+    begin
+    	shift:= 80;
+    	shift1:= 60;
+    end;
+    
+    end;
     TFlight.GetRightSideImage;
 end;
 
@@ -55,7 +70,7 @@ procedure TFlight.Draw(image : Pointer);
 begin
 	SetActivePage(0);
 	SetVisualPage(0);
-  PutImage(x, y, image^, XorPut);
+ 	PutImage(x, y, image^, XorPut);
     delay (delayInterval);
 end;
 

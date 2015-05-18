@@ -2,23 +2,23 @@ unit BLASTER;
 
 interface
 uses
-	crt,graph, FLIGHT;
+	crt,graph, FLIGHT; 
 
 type
-  TShoot = object
+  TShoot = object { The define of an object }
   public
-    procedure Move(var x1, y1: Integer;  var OutCondition, GtStr : Boolean);
-    procedure Init(_x, _y : Integer);
-    procedure BulletDraw;
-    procedure MoveBullet(var CircleX, CircleY : Integer; var ExCond, GtStr : Boolean);
+    procedure Move(var x1, y1: Integer;  var OutCondition : Boolean; var GtStr : Boolean); { The procedure of integration beetween everything }
+    procedure Init(_x, _y : Integer); { Initialization of an object }
+    procedure BulletDraw; { The draw of a bullet }
+    procedure MoveBullet(var CircleX, CircleY : Integer; var ExCond, GtStr : Boolean); { Moving of Bullet }
   private
-    xmin, xmax: Integer;
+    xmin, xmax: Integer; 
     delayinterval: Integer;
     BlastShift : Integer;
     GetStart : Boolean;
-    procedure BlastDraw;
+    procedure BlastDraw; { The draw of a blast }
     procedure MoveBlast(var x1, y1: Integer);
-    function Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer; var GtStr: Boolean): Boolean;
+    function Crossing(cornX, cornY, BulletX, BulletY, PlaneWidth, PlaneHeigth : Integer; var GtStr: Boolean): Boolean; { The cross of bullet and plane }
 end;
 var 
   CircX, CircY : Integer;
@@ -43,7 +43,7 @@ begin
   y1:= _y;
   PutImage(x1, y1, Pict^, Normalput);
 end;
-procedure TShoot.Move(var x1, y1: Integer; var OutCondition, GtStr : Boolean);
+procedure TShoot.Move(var x1, y1: Integer; var OutCondition : Boolean; var GtStr : Boolean);
 begin
   case button of 
     #75 : 
@@ -57,7 +57,10 @@ begin
       TShoot.MoveBlast(x1,y1);
     end;
     #47: 
+    begin
       OutCondition:= true;
+      Clearviewport;
+    end;
     #32:
     begin
       if GtStr = false then 

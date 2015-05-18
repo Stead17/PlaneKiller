@@ -7,7 +7,7 @@ uses
 type
   TShoot = object
   public
-    procedure Move(var x1, y1: Integer;  var OutCondition, GtStr : Boolean);
+    procedure Move(var x1, y1: Integer;  var OutCondition : Boolean; var GtStr : Boolean);
     procedure Init(_x, _y : Integer);
     procedure BulletDraw;
     procedure MoveBullet(var CircleX, CircleY : Integer; var ExCond, GtStr : Boolean);
@@ -43,7 +43,7 @@ begin
   y1:= _y;
   PutImage(x1, y1, Pict^, Normalput);
 end;
-procedure TShoot.Move(var x1, y1: Integer; var OutCondition, GtStr : Boolean);
+procedure TShoot.Move(var x1, y1: Integer; var OutCondition : Boolean; var GtStr : Boolean);
 begin
   case button of 
     #75 : 
@@ -57,7 +57,10 @@ begin
       TShoot.MoveBlast(x1,y1);
     end;
     #47: 
+    begin
       OutCondition:= true;
+      Clearviewport;
+    end;
     #32:
     begin
       if GtStr = false then 
@@ -112,7 +115,7 @@ begin
   begin
     for j:= cornY to cornY + PlaneHeigth do
     begin
-      if ( (BulletX + 6 = i) or  (BulletX = i ) or  (BulletX + 12 = i) )and ( BulletY = j) ) then
+      if ( (BulletX + 6 = i) or (BulletX = i) or (BulletX + 12 = i) ) and ( ( BulletY = j ) or (BulletY + 6 = j) ) then
       begin
         GtStr:= false;
         Crossing:= false;
